@@ -18,7 +18,7 @@ export default function ContactUsModal({
 
   const submitContact = async () => {
     try {
-        const res = await fetch("https://durgapujo.in/send_email/send-contact/", {
+        const res = await fetch("https://durgapujo.in/api/send_email/send-contact/", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

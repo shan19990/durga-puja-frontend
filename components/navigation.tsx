@@ -178,7 +178,7 @@ export default function Navigation() {
 
     const requestCode = async () => {
         try {
-            const res = await fetch("https://durgapujo.in/accounts/request-otp/", {
+            const res = await fetch("https://durgapujo.in/api/accounts/request-otp/", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({email}),
@@ -198,7 +198,7 @@ export default function Navigation() {
     const verifyCode = async () => {
         const fullCode = code.join("")
         try {
-            const res = await fetch("https://durgapujo.in/accounts/verify-otp/", {
+            const res = await fetch("https://durgapujo.in/api/accounts/verify-otp/", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({email, code: fullCode}),
@@ -236,7 +236,7 @@ export default function Navigation() {
 
         try {
             if (refresh && access) {
-                await fetch("https://durgapujo.in/accounts/api/logout/", {
+                await fetch("https://durgapujo.in/api/accounts/logout/", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -419,7 +419,7 @@ export default function Navigation() {
                                 <button
                                     onClick={() =>
                                         (window.location.href =
-                                            "https://durgapujo.in/oauth/login/google-oauth2/")
+                                            "https://durgapujo.in/api/oauth/login/google-oauth2/")
                                     }
                                     className="w-full mb-3 px-4 py-2 bg-blue-500 text-white rounded-lg"
                                 >
@@ -428,7 +428,7 @@ export default function Navigation() {
                                 <button
                                     onClick={() =>
                                         (window.location.href =
-                                            "https://durgapujo.in/oauth/login/twitter/")
+                                            "https://durgapujo.in/api/oauth/login/twitter/")
                                     }
                                     className="w-full px-4 py-2 bg-blue-400 text-white rounded-lg"
                                 >

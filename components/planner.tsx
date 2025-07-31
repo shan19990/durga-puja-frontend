@@ -76,7 +76,7 @@ const Planner: React.FC<Props> = ({pandals}) => {
     };
 
     const fetchORSUsage = async () => {
-        const res = await fetch('https://durgapujo.in/orsusage/api/usage/', {
+        const res = await fetch('https://durgapujo.in/api/orsusage/api/usage/', {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${accessToken}`
@@ -401,7 +401,7 @@ const Planner: React.FC<Props> = ({pandals}) => {
         token: string
     ): Promise<Pandal[] | null> => {
         try {
-            const response = await fetch('https://durgapujo.in/orsusage/api/ors-optimized-route/', {
+            const response = await fetch('https://durgapujo.in/api/orsusage/api/ors-optimized-route/', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

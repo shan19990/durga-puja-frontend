@@ -24,7 +24,7 @@ export default function Home() {
     useEffect(() => {
         async function getPandals() {
             try {
-                const res = await axios.get("https://durgapujo.in/pandals", {
+                const res = await axios.get("https://durgapujo.in/api/pandals", {
                     withCredentials: true
                 })
                 setPandals(res.data)

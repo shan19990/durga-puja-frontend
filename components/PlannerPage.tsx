@@ -23,7 +23,7 @@ export default function PlannerPage() {
   useEffect(() => {
     async function getPandals() {
       try {
-        const res = await axios.get("https://durgapujo.in/pandals");
+        const res = await axios.get("https://durgapujo.in/api/pandals");
         setPandals(res.data);
       } catch (error) {
         console.error("Error fetching pandals:", error);
