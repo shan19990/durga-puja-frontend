@@ -19,7 +19,7 @@ const PlannerPage = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://durgapujo.in';
+    const API_BASE = 'https://durgapujo.in/api/';
 
     // Fetch pandal details
     useEffect(() => {

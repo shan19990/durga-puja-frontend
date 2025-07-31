@@ -18,7 +18,7 @@ yarn-error.log*
 next-env.d.ts
 
 # ---- Python/Django ----
-*.pyc
+*.pycyarn
 __pycache__/
 /venv*/
 /env*/
