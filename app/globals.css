@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --durga-gold: #ffd700;
+    --durga-orange: #ff8c00;
+    --durga-red: #dc143c;
+    --durga-pink: #ff69b4;
+    --durga-brown: #8b4513;
+    --durga-light-gold: #fff8dc;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+    background: linear-gradient(135deg, #fff8dc 0%, #ffe4b5 100%);
+    min-height: 100vh;
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-gradientShift {
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.animate-pulse-custom {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Gradient borders */
+.gradient-border {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+}
+
+.gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    /* background: linear-gradient(45deg, var(--durga-gold), var(--durga-orange), var(--durga-red), var(--durga-pink)); */
+    border-radius: 10px;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--durga-light-gold);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--durga-gold), var(--durga-orange));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(var(--durga-orange), var(--durga-red));
+}
+
+.swiper-wrapper {
+    margin: 20px 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.home-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.pandal-marker {
+    background: none !important;
+    border: none !important;
+}
