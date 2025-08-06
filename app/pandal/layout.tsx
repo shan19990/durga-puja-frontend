@@ -1,5 +1,6 @@
 import ClientWrapper from "@/components/ClientWrapper";
 import Navigation from "@/components/navigation";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export default function RootLayout({
                                        children,
@@ -8,6 +9,7 @@ export default function RootLayout({
 }) {
     return (
         <ClientWrapper>
+            <GoogleAnalytics />
             <Navigation/>
             {children}
         </ClientWrapper>

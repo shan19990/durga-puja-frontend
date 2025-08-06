@@ -2,46 +2,147 @@
 
 import Navigation from "@/components/navigation"
 import Hero from "@/components/hero"
-import dynamic from "next/dynamic" // ✅ Add this
+import dynamic from "next/dynamic"
 import PandalList from "@/components/pandal-list"
 import HistorySection from "@/components/history-section"
 import ContactUsModal from "@/components/ContactUsModal"
-import {useEffect, useState} from "react"
-import type {Pandal} from "@/types/pandal"
+import {useEffect, useState, useCallback} from "react"
 import axios from "axios"
+import type {Pandal} from "@/types/pandal"
+import Cookies from "js-cookie"
 
-// ✅ Dynamically import InteractiveMap with SSR disabled
 const InteractiveMap = dynamic(() => import("@/components/interactive-map"), {
     ssr: false,
 })
 
-
 export default function Home() {
     const [pandals, setPandals] = useState<Pandal[]>([])
+    const [selectedPandal, setSelectedPandal] = useState<Pandal | null>(null)
     const [showContact, setShowContact] = useState(false)
-    const [selectedPandal, setSelectedPandal] = useState<Pandal | null>(null) // <-- Add this
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const [userLikedPandals, setUserLikedPandals] = useState<Set<number>>(new Set())
+    const [pandalLikes, setPandalLikes] = useState<{[key: number]: number}>({})
+
+    const getPandals = useCallback(async () => {
+        try {
+            setIsRefreshing(true)
+            const accessToken = Cookies.get("access");
+            
+            // Set up headers - include auth token if available
+            const headers: any = {};
+            if (accessToken) {
+                headers.Authorization = `Bearer ${accessToken}`;
+            }
+
+            const res = await axios.get("https://durgapujo.in/api/pandals", {
+                withCredentials: true,
+                headers: headers
+            })
+            setPandals(res.data)
+        } catch (error) {
+            console.error("Error fetching pandals:", error)
+        } finally {
+            setIsRefreshing(false)
+        }
+    }, [])
+
+    // Load user's liked pandals from API
+    const loadUserLikedPandals = useCallback(async () => {
+        const accessToken = Cookies.get("access");
+        if (!accessToken) return;
+        
+        try {
+            const response = await fetch('https://durgapujo.in/api/user/liked-pandals/', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const likedIds: number[] = Array.isArray(data.liked_pandal_ids) 
+                    ? data.liked_pandal_ids.map((id: any) => Number(id)).filter((id: number) => !isNaN(id))
+                    : [];
+                setUserLikedPandals(new Set<number>(likedIds));
+            }
+        } catch (error) {
+            console.error('Error loading liked pandals:', error);
+        }
+    }, []);
+
+    // Initialize pandal likes from API data
+    useEffect(() => {
+        const likes: {[key: number]: number} = {};
+        pandals.forEach(pandal => {
+            likes[pandal.id] = pandal.like_count || 0;
+        });
+        setPandalLikes(likes);
+    }, [pandals]);
+
+    // Load user's liked pandals when pandals are loaded
+    useEffect(() => {
+        if (pandals.length > 0) {
+            loadUserLikedPandals();
+        }
+    }, [pandals, loadUserLikedPandals]);
+
+    // Function to handle like updates from any component
+    const handleLikeUpdate = useCallback((pandalId: number, liked: boolean, likeCount: number) => {
+        setUserLikedPandals(prev => {
+            const newSet = new Set(prev);
+            if (liked) {
+                newSet.add(pandalId);
+            } else {
+                newSet.delete(pandalId);
+            }
+            return newSet;
+        });
+        
+        setPandalLikes(prev => ({
+            ...prev,
+            [pandalId]: likeCount
+        }));
+
+        // Update the pandals array with new like count
+        setPandals(prev => prev.map(pandal => 
+            pandal.id === pandalId 
+                ? { ...pandal, like_count: likeCount, liked_by_user: liked }
+                : pandal
+        ));
+
+        // Also update selected pandal if it's the same one
+        setSelectedPandal(prev => 
+            prev && prev.id === pandalId 
+                ? { ...prev, like_count: likeCount, liked_by_user: liked }
+                : prev
+        );
+    }, []);
 
     useEffect(() => {
-        async function getPandals() {
-            try {
-                const res = await axios.get("https://durgapujo.in/api/pandals", {
-                    withCredentials: true
-                })
-                setPandals(res.data)
-            } catch (error) {
-                console.error("Error fetching pandals:", error)
-            }
-        }
-
         getPandals()
-    }, [])
+    }, [getPandals])
 
     return (
         <main className="min-h-screen">
             <Navigation/>
             <Hero/>
-            <InteractiveMap pandals={pandals} selectedPandal={selectedPandal}/> {/* Pass selectedPandal */}
-            <PandalList pandals={pandals} onPandalClick={setSelectedPandal}/> {/* Pass setter */}
+            <InteractiveMap 
+                pandals={pandals} 
+                selectedPandal={selectedPandal}
+                setSelectedPandal={setSelectedPandal}
+                userLikedPandals={userLikedPandals}
+                pandalLikes={pandalLikes}
+                onLikeUpdate={handleLikeUpdate}
+                isRefreshing={isRefreshing}
+            />
+            <PandalList 
+                pandals={pandals} 
+                onPandalClick={(pandal: Pandal) => setSelectedPandal(pandal)}
+                userLikedPandals={userLikedPandals}
+                pandalLikes={pandalLikes}
+                onLikeUpdate={handleLikeUpdate}
+            />
             <HistorySection/>
 
             <button
@@ -53,19 +154,6 @@ export default function Home() {
             </button>
 
             <ContactUsModal isOpen={showContact} onClose={() => setShowContact(false)}/>
-
-            <footer className="bg-gradient-to-r from-orange-600 to-red-600 text-white py-12 px-4">
-                <div className="max-w-6xl mx-auto text-center">
-                    <div className="flex items-center justify-center space-x-3 mb-4">
-                        <img src="/images/durga.png" alt="Durga" className="h-12 w-12 rounded-full"/>
-                        <h3 className="text-2xl font-bold">Durga Puja Pandals</h3>
-                    </div>
-                    <p className="text-orange-100 mb-4">
-                        Celebrating the divine feminine and Bengal's rich cultural heritage
-                    </p>
-                    <p className="text-orange-200 text-sm">© 2024 Durga Puja Pandals. All rights reserved.</p>
-                </div>
-            </footer>
         </main>
     )
 }

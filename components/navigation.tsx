@@ -5,6 +5,7 @@ import Link from "next/link"
 import {Calendar, Home, Info, MapPin, Menu, X} from "lucide-react"
 import {useAuth} from '@/context/AuthContext';
 import Cookies from "js-cookie"
+import showToast from "@/lib/toast";
 
 export default function Navigation() {
     const [isOpen, setIsOpen] = useState(false)
@@ -115,7 +116,7 @@ export default function Navigation() {
                     setIsLoggedIn(true); // ✅ update global login state
                 } else {
                     logout()
-                    alert("Session expired. Please login again.")
+                    showToast.warning("Session expired. Please login again.")
                 }
             } catch (err) {
                 console.error(err)
@@ -188,7 +189,7 @@ export default function Navigation() {
                 setTimer(60)
                 setCanResend(false)
             } else {
-                alert("Failed to request code")
+                showToast.error("Failed to request code")
             }
         } catch (err) {
             console.error(err)
@@ -211,7 +212,7 @@ export default function Navigation() {
                 setIsLoggedIn(true); // ✅ update global login state
                 closeModal()
             } else {
-                alert("Invalid code")
+                showToast.warning("Invalid code")
             }
         } catch (err) {
             console.error(err)

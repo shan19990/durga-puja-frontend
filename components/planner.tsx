@@ -9,6 +9,7 @@ import {useAuth} from "@/context/AuthContext";
 import haversine from 'haversine-distance';
 import {DotLottieReact} from '@lottiefiles/dotlottie-react';
 import {useRouter} from 'next/navigation';
+import { showToast } from '@/lib/toast';
 
 interface Pandal {
     id: number;
@@ -296,7 +297,7 @@ const Planner: React.FC<Props> = ({pandals}) => {
 
     const locateUser = () => {
         if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser');
+            showToast.warning('Geolocation is not supported by your browser');
             return;
         }
 
@@ -367,7 +368,7 @@ const Planner: React.FC<Props> = ({pandals}) => {
                 }
             },
             (error) => {
-                alert('Unable to retrieve your location');
+                showToast.warning('Unable to retrieve your location');
                 console.error('Geolocation error:', error);
             },
             {
@@ -411,12 +412,12 @@ const Planner: React.FC<Props> = ({pandals}) => {
             });
 
             if (response.status === 429) {
-                alert("🚫 You’ve reached your daily limit for ORS route optimization.");
+                showToast.warning("🚫 You’ve reached your daily limit for ORS route optimization.");
                 return null; // 👈 Signal quota error
             }
 
             if (response.status === 401) {
-                alert("🚫 Please login");
+                showToast.warning("🚫 Please login");
                 router.push('/');
                 return null;
             }
@@ -576,7 +577,7 @@ const Planner: React.FC<Props> = ({pandals}) => {
             sortedPandals = [...manualSelectedPandals];
         } else if (routeStrategy === 'ors') {
             if (!isLoggedIn) {
-                alert("You must be logged in to use OpenRouteService optimized routing.");
+                showToast.warning("You must be logged in to use OpenRouteService optimized routing.");
                 setRouteStrategy('greedy');
                 return;
             }

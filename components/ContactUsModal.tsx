@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { showToast } from '@/lib/toast';
 
 export default function ContactUsModal({
   isOpen,
@@ -29,15 +30,15 @@ export default function ContactUsModal({
         const result = await res.json();
 
         if (res.ok) {
-            alert("Thank you for your message!");
+            showToast.success("Thank you for your message!");
             setContactForm({ name: "", email: "", contact: "", message: "" }); // ✅ reset fields
             onClose();
         } else {
-            alert(result.error || "Something went wrong.");
+            showToast.error(result.error || "Something went wrong.");
         }
     } catch (err) {
         console.error(err);
-        alert("Error sending message.");
+        showToast.error("Error sending message.");
     }
     };
 

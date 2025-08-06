@@ -1,32 +1,27 @@
 "use client"
 
 import {useEffect, useRef, useState} from "react"
-import {ChevronLeft, ChevronRight, MapPin} from "lucide-react"
+import {ChevronLeft, ChevronRight, MapPin, Heart} from "lucide-react"
 import {Swiper, SwiperSlide} from "swiper/react"
 import {Navigation} from "swiper/modules"
 import 'swiper/css'
 import 'swiper/css/navigation'
-
-interface Pandal {
-    id: number;
-    name: string;
-    region: string;
-    latitude: number;
-    longitude: number;
-    is_big: boolean;
-    main_pic?: string | null;
-}
+import type {Pandal} from "@/types/pandal"
+import Cookies from "js-cookie"
+import { showToast } from '@/lib/toast';
 
 interface Props {
     pandals: Pandal[],
-    onPandalClick: (pandal: Pandal) => void
+    onPandalClick: (pandal: Pandal) => void,
+    userLikedPandals: Set<number>,
+    pandalLikes: {[key: number]: number},
+    onLikeUpdate: (pandalId: number, liked: boolean, likeCount: number) => void
 }
 
-export default function PandalList({pandals, onPandalClick}: Props) {
+export default function PandalList({pandals, onPandalClick, userLikedPandals, pandalLikes, onLikeUpdate}: Props) {
     const [activeAlphabet, setActiveAlphabet] = useState<string | null>(null)
     const [swiperInstance, setSwiperInstance] = useState<any>(null)
     const [filteredPandals, setFilteredPandals] = useState<Pandal[]>(pandals);
-
 
     const [canSlidePrev, setCanSlidePrev] = useState(false)
     const [canSlideNext, setCanSlideNext] = useState(true)
@@ -46,6 +41,20 @@ export default function PandalList({pandals, onPandalClick}: Props) {
 
     const alphabets = Object.keys(groupedPandals).sort()
 
+    // Only update filteredPandals when pandals change AND we need to apply the current filter
+    useEffect(() => {
+        if (activeAlphabet) {
+            // Re-apply the current alphabet filter with updated pandal data
+            const filtered = pandals.filter(
+                (p) => p.name.charAt(0).toUpperCase() === activeAlphabet
+            )
+            setFilteredPandals(filtered)
+        } else {
+            // No filter active, show all pandals
+            setFilteredPandals(pandals)
+        }
+    }, [pandals, activeAlphabet]);
+
     const handleAlphabetClick = (letter: string) => {
         if (activeAlphabet === letter) {
             setActiveAlphabet(null)
@@ -63,12 +72,54 @@ export default function PandalList({pandals, onPandalClick}: Props) {
         }
     }
 
-    useEffect(() => {
-        setFilteredPandals(pandals)
-        setCanSlidePrev(false)
-        setCanSlideNext(true)
-    }, [pandals]);
+    const handleLike = async (pandalId: number, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // ✅ Check authentication FIRST before any state updates
+        const accessToken = Cookies.get("access");
+        
+        if (!accessToken) {
+            showToast.warning("Please login to like pandals 🔐");
+            return; // Exit early - no optimistic updates when not authenticated
+        }
+        
+        // ✅ Only proceed with optimistic update if user is authenticated
+        const isCurrentlyLiked = userLikedPandals.has(pandalId);
+        const currentLikes = pandalLikes[pandalId] || 0;
+        
+        // Optimistically update parent state
+        onLikeUpdate(pandalId, !isCurrentlyLiked, isCurrentlyLiked ? currentLikes - 1 : currentLikes + 1);
 
+        try {
+            const response = await fetch(`https://durgapujo.in/api/pandals/${pandalId}/toggle-like/`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to toggle like');
+            }
+
+            const data = await response.json();
+            
+            // Update with server response
+            onLikeUpdate(pandalId, data.liked, data.like_count);
+
+        } catch (error) {
+            console.error('Error toggling like:', error);
+            
+            // Revert optimistic update on error
+            onLikeUpdate(pandalId, isCurrentlyLiked, currentLikes);
+            
+            showToast.error("Failed to update like. Please try again.");
+        }
+    };
+
+    // Only update navigation state when swiper instance changes
     useEffect(() => {
         if (swiperInstance) {
             const updateNavState = () => {
@@ -83,6 +134,11 @@ export default function PandalList({pandals, onPandalClick}: Props) {
         }
     }, [swiperInstance])
 
+    // Initialize navigation state when filtered pandals change
+    useEffect(() => {
+        setCanSlidePrev(false)
+        setCanSlideNext(filteredPandals.length > 4) // Assuming 4 slides per view on desktop
+    }, [filteredPandals]);
 
     return (
         <section id="pandal-list" className="py-20 px-10 bg-gradient-to-br from-orange-50 to-red-50">
@@ -152,10 +208,10 @@ export default function PandalList({pandals, onPandalClick}: Props) {
                             <div
                                 className="flex flex-col justify-between bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden"
                                 style={{
-                                    height: "340px",           // Increased height for uniformity
-                                    minWidth: "260px",         // Minimum width for all cards
-                                    maxWidth: "320px",         // Maximum width for all cards
-                                    width: "100%",             // Responsive width
+                                    height: "340px",
+                                    minWidth: "260px",
+                                    maxWidth: "320px",
+                                    width: "100%",
                                     display: "flex"
                                 }}
                                 onClick={(e) => {
@@ -183,12 +239,43 @@ export default function PandalList({pandals, onPandalClick}: Props) {
                                         <p className="text-gray-600 text-sm">{pandal.region}</p>
                                     </div>
                                 </div>
-                                <div className="px-4 pb-4">
+                                
+                                {/* Buttons Section */}
+                                <div className="px-4 pb-4 flex gap-2">
+                                    {/* Like Button with Count - Blue when liked */}
                                     <button
-                                        className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition"
-                                        onClick={() => window.open(`/pandal/${pandal.id}`, "_blank")}
+                                        onClick={(e) => handleLike(pandal.id, e)}
+                                        className={`flex items-center gap-1 px-2 py-2 border rounded-lg transition-all duration-200 ${
+                                            userLikedPandals.has(pandal.id) 
+                                                ? "bg-blue-50 border-blue-300 hover:bg-blue-100" 
+                                                : "bg-white border-orange-300 hover:bg-orange-50"
+                                        }`}
                                     >
-                                        View Details
+                                        <Heart 
+                                            className={`w-4 h-4 transition-all duration-200 ${
+                                                userLikedPandals.has(pandal.id) 
+                                                    ? "fill-blue-500 text-blue-500" 
+                                                    : "text-orange-500 hover:text-red-500"
+                                            }`}
+                                        />
+                                        <span className={`text-sm ${
+                                            userLikedPandals.has(pandal.id) 
+                                                ? "text-blue-600" 
+                                                : "text-gray-600"
+                                        }`}>
+                                            {pandalLikes[pandal.id] || 0}
+                                        </span>
+                                    </button>
+                                    
+                                    {/* View Details Button */}
+                                    <button
+                                        className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(`/pandal/${pandal.id}`, "_blank");
+                                        }}
+                                    >
+                                        View Pandal
                                     </button>
                                 </div>
                             </div>
